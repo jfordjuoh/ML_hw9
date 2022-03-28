@@ -1,0 +1,37 @@
+---
+title: "Exposome (ML_HW9)"
+author: Judy Fordjuoh
+date: March 27, 2022
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Question 1
+### Examine the different features within the data frames and provide some descriptive measures (for continuous measures: means and ranges, for categorical/binary: frequency counts). Feel free to look at correlations between features, examine missingness, and other exploratory data analyses. You don't need to do this for all features within the data frames (although you could) but you should document summaries for at least 5 features from exposome and 1 feature from phenotype. These don't need to be formatted into tables or data frames. Just document that you've done some data exploration. 
+```{r cars}
+
+```
+
+
+#### Question 2
+### Develop a single research question. It can be a prediction or hypothesis generating research question. It doesn't need to involve all features but it must involve at least one outcome from phenotype and 5 features from exposome (and covariates if relevant). This can be as simple or complex as a question as you want it to be. Clearly state the research question in a complete sentence outside of a code chunk, not as a comment within one.
+```{r}
+
+```
+
+#### Question 3
+### Implement one algorithm from class that we've used previously to address your question. For this assignment, you should partition your data, develop the model in training (including hyperparameter turning and cross-validation) and then get final evaluation metrics in testing data. You can use package defaults for tuning or create your own vectors/grids. This is to keep getting practice with implementing algorithms so do as much as you would like and find useful.
+```{r}
+
+```
+
+
+#### Question 4
+### Optional: Adapt the sample code for elastic net within the provided .RMD file to examine two-way interactions using the features and outcome you selected.
+```{r}
+
+```
+
