@@ -1,0 +1,104 @@
+---
+title: "Exposome (ML_HW9)"
+author: Judy Fordjuoh
+date: March 27, 2022
+output: word_document
+---
+We aimed to evaluate the association between a broad range of prenatal and postnatal lifestyle and environmental exposures and lung function in children.
+
+```{r data_prep, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)  
+
+#Exposome contains all of the environmental features measured on children. Phenotype contains health outcomes measured during the study. Covariate contains demographics and maternal information during pregnancy. Codebook is a detailed listing of all variables within the data frames. 
+library(tidyverse)
+library(caret)
+library(Amelia)
+library(dplyr)
+library(rpart.plot)
+
+#Load data using path of where file is stored
+load("/Users/judyfordjuoh/Desktop/Machine Learning/exposome.RData")
+```
+
+#### Question 1
+### Examine the different features within the data frames and provide some descriptive measures (for continuous measures: means and ranges, for categorical/binary: frequency counts). Feel free to look at correlations between features, examine missingness, and other exploratory data analyses. You don't need to do this for all features within the data frames (although you could) but you should document summaries for at least 5 features from exposome and 1 feature from phenotype. These don't need to be formatted into tables or data frames. Just document that you've done some data exploration. 
+```{r covariates}
+#analyzing the covariates data with only the features I decided to analyze
+covariates %>%
+  mutate(h_edumc_None = recode(h_edumc_None,
+                            "1" = "Primary School",
+                            "2" = "Secondary School",
+                            "3" = "University Degree or Higher")) %>%
+  mutate(h_native_None = recode(h_native_None,
+                            "0" = "No Native Parent",
+                            "1" = "Only One Native Parent",
+                            "2" = "Both Parents Native")) %>%
+  select(ID,h_edumc_None, h_native_None, h_mbmi_None, hs_wgtgain_None) %>%
+  print(max(covariates$h_mbmi_None, na.rm = TRUE) - min(covariates$h_mbmi_None, na.rm = TRUE)) %>% #range of h_mbmi_None
+  print(max(covariates$hs_wgtgain_None, na.rm = TRUE) - min(covariates$hs_wgtgain_None, na.rm = TRUE)) %>% #range of hs_wgtgain_None
+summary(covariates$h_mbmi_None) %>% summary(covariates$hs_wgtgain_None) %>%
+count(covariates,h_edumc_None) %>% count(covariates,h_native_None)
+```
+
+
+```{r exposome}
+#analyzing the exposome data with only the features I decided to analyze
+ex = exposome %>%
+    mutate(e3_alcpreg_yn_None = recode(e3_alcpreg_yn_None,
+                            "0" = "None",
+                            "1" = "<1m for KANC")) %>%
+    select(ID, e3_alcpreg_yn_None, h_folic_t1_None, h_pamod_t3_None, h_greenyn300_preg_None, h_pm10_ratio_preg_None, h_accesslines300_preg_dic0, h_accesspoints300_preg_Log, 	
+h_builtdens300_preg_Sqrt, h_connind300_preg_Sqrt, h_walkability_mean_preg_None) %>%
+   missmap(ex, main = "Missing values vs observed") %>%
+  print(max(ex$h_pm10_ratio_preg_None, na.rm = TRUE) - min(ex$h_pm10_ratio_preg_None, na.rm = TRUE)) %>% #range of h_pm10_ratio_preg_None
+    print(max(ex$h_accesspoints300_preg_Log, na.rm = TRUE) - min(ex$h_accesspoints300_preg_Log, na.rm = TRUE)) %>% #range of h_accesspoints300_preg_Log
+  print(max(ex$h_builtdens300_preg_Sqrt, na.rm = TRUE) - min(ex$h_builtdens300_preg_Sqrt, na.rm = TRUE)) %>% #range of h_builtdens300_preg_Sqrt
+   print(max(ex$h_connind300_preg_Sqrt, na.rm = TRUE) - min(ex$ h_connind300_preg_Sqrt, na.rm = TRUE)) #h_connind300_preg_Sqrt
+ print(max(ex$h_walkability_mean_preg_None, na.rm = TRUE) - min(ex$h_walkability_mean_preg_None , na.rm = TRUE)) #h_walkability_mean_preg_None 
+   summary(ex$h_pm10_ratio_preg_None) %>% 
+   summary(ex$h_accesspoints300_preg_Log) %>% 
+   summary(ex$h_builtdens300_preg_Sqrt) %>% 
+   summary(ex$h_connind300_preg_Sqrt) %>% 
+   summary(ex$h_walkability_mean_preg_None) %>% 
+   count(ex,e3_alcpreg_yn_None) %>%
+   count(ex,h_folic_t1_None) %>%
+   count(ex,h_pamod_t3_None) %>% 
+   count(ex,h_greenyn300_preg_None) %>% 
+   count(ex,h_accesslines300_preg_dic0)
+  
+```
+I selected a few variable I found interesting in the exposome dataset in order to reduce the amount of variables. In the ex dataset, there is no missing data. There were 405 cases of mothers who had <1m for KANC for the variable discussing alcohol consumption while pregnant. Although 606 mothers did not take folic acid while pregnant, 695 mothers in this data set did take folic acid while pregnant. 980 mothers reported that they did have access to greenspace at a distance of at most 300m of their home while they were pregnant. While 42 mothers reported doing no walking/cycling activity while pregnant, 474 reported doing this often, 191 reported doing this sometimes, and 594 reported walking/cycling activity very often during their pregnancy. The average walkability index was 0.2674, with a maximum walkability index of 0.6250 and minimum of 0.1000. The average connectivity density  was 12.737, with a maximum connectivity density of 27.276 and minimum of 1.887. The average building density was 417.06, with a maximum building density of 807.57 and minimum of 11.02. The average building density was 417.06, with a maximum building density of 807.57 and minimum of 11.02. The average number of bus public transport mode stops inside each 300m buffer was 2.670, with a maximum of 4.58 and minimum of 1.270. The average PM10 value was 23.504, with a maximum PM10 value of 47.698 and minimum of 8.066.
+
+
+```{r phenotype}
+#analyzing the phenotype data with only the features I decided to analyze
+pheno = phenotype %>%
+  mutate(hs_asthma = recode(hs_asthma,
+                            "0" = "No Asthma",
+                            "1" = "Asthma")) %>%
+  select(ID, e3_bw, hs_asthma, hs_zbmi_who) %>%
+  missmap(pheno, main = "Missing values vs observed") %>%
+  print(max(pheno$e3_bw, na.rm = TRUE) - min(pheno$e3_bw, na.rm = TRUE)) %>% #range of e3_bw
+  print(max(pheno$hs_zbmi_who, na.rm = TRUE) - min(pheno$hs_zbmi_who, na.rm = TRUE)) %>% #range of hs_zbmi_who
+    summary(pheno$e3_bw) %>% summary(pheno$hs_zbmi_who) %>%
+    count(pheno,hs_asthma)
+
+```
+In the phenotype data set there was no missing data. There were 142 cases of Asthma. The mean child birth weight in grams was 3389g, with a maximum of 5260g and a minimum of 1100g (range = 4160). The average body mass index z-score of the child at 6-11 years old was 0.4032, with a maximum of 4.72 and minimum of -3.5800 (range = 8.3). 
+
+
+```{r merging data}
+#Merge all data frames into a single data frame. FYI, this is just a shortcut by combining baseR with piping from tidyverse. There are other ways of merging across three data frames that are likely more elegant.
+
+studydata <- merge(ex,pheno,by = "ID") %>% merge(covar, by = "ID")
+
+#Strip off ID Variable
+studydata$ID <- NULL
+
+#Partition data for use in demonstration
+set.seed(100)
+train.indices <- createDataPartition(y = studydata$e3_bw,p = 0.7,list = FALSE)
+train.data <- studydata[train.indices, ]
+test.data <- studydata[-train.indices, ]
+```
+
